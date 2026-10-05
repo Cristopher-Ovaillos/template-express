@@ -1,16 +1,16 @@
-﻿import express, { type Express, type Request, type Response } from 'express';
+﻿import express, { type Application } from 'express';
+import { initLoaders } from './loaders/index.ts';
+import { config } from './config/index.ts';
+import { errorHandler } from './core/errors/errorHandler.ts';
+//
+//import {routes} from './routes/index.ts';
 
-//inicializamos el servidor web
-const app: Express = express();
+export const createApp = async (): Promise<Application> => {
+  const app: Application = express();
+  await initLoaders({ expressApp: app });
+  //app.use(config.api.prefix, routes);
+  app.use(errorHandler);
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello World!');
-});
 
-//iniciamos el servidor web en el puerto 3000
-//con listen nos aseguramos que el servidor se ejecuta en el puerto 3000
-//todas las peticiones las debemos recibir en el puerto 3000
-app.listen(3000, ()=>{
-    console.log('consola de express');
-});
-
+  return app;
+};

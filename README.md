@@ -24,7 +24,17 @@ Si se sigue la documentacion de express, uno de los errores comunes al hacer 'no
 Make sure to set "type": "module" in the nearest package.json file or use the .mjs extension.
 ```
 
-Para solucionarlo, se añade 'type': 'module' en el package.json [no lo dice en la doc].
+Para solucionarlo, se añadio 'type': 'module' en el package.json [no lo dice en la doc].
+Previamente decia "type": "commonjs".
 
 
 
+# Paquetes 
+- https://www.npmjs.com/package/pino [y lo de pino-pretty para  formatear y texto con color]
+- https://www.npmjs.com/package/dotenv
+- https://www.npmjs.com/package/cors
+
+# Fuentes
+
+- https://softwareontheroad.com/es/ideal-nodejs-project-structure
+- https://dev.to/jefersoneiji/architecting-scalable-and-maintainable-nodejs-applications-best-practices-and-examples-o16 
