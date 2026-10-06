@@ -1,12 +1,12 @@
 ﻿
-// inicio de http server
+// inicio de http server en el puerto especificado
 
 import { createApp } from './app.ts';
 import { config } from './config/index.ts';
 import { logger } from './loaders/logger.ts';
 
 const startServer = async () => {
-  // Inicializamos la app configurada
+  //inicializamos la app configurada
   const app = await createApp();
 
   //arrancamos el servidor HTTP
@@ -19,23 +19,24 @@ const startServer = async () => {
   const gracefulShutdown = (signal: string) => {
     logger.info(` SENIAL: ${signal} recibida. Iniciando cierre controlado del servidor...`);
 
-    // Deja de aceptar nuevas peticiones HTTP pero permite terminar las peticiones en curso
+    //deja de aceptar nuevas peticiones HTTP pero permite terminar las peticiones en curso
     server.close(async () => {
       logger.info('SERVIDOR: HTTP cerrado. Desconectando bases de datos y limpiando recursos...');
       logger.info('OK Proceso finalizado de forma limpia.');
       process.exit(0);
     });
 
-    // Fuerza la salida si las conexiones colgadas no se cierran en 10 segundos
+    //fuerza la salida si las conexiones colgadas no se cierran en 10 segundos
     setTimeout(() => {
       logger.error('X Cierre forzado: Tiempo de espera agotado.');
       process.exit(1);
-    }, 10000);
+    }, 10000); //por si alguna peticion se queda colgada, forzamos
   };
 
-  // Capturamos las señales del sistema para apagar el servidor sin cortar peticiones activas
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  //capturamos las seniales del sistema para apagar el servidor sin cortar peticiones activas
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));//flags
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  //sigtem y sigint si recibimos esto, la app deja de recibir trafico nuevo pero espera a que finalicen las peticiiones activas
 };
 
 startServer().catch((err) => {
