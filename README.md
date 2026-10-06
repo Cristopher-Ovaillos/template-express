@@ -52,6 +52,12 @@ src/
     └── index.d.ts
 ```
 
+### Diagrama de dependencias
+
+Relaciones de importación entre los archivos de `src/`:
+
+![Diagrama de dependencias de src](template.png)
+
 ---
 
 ## Componentes Reutilizables del Template
