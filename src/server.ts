@@ -4,8 +4,13 @@
 import { createApp } from './app.ts';
 import { config } from './config/index.ts';
 import { logger } from './loaders/logger.ts';
+import { pgp, checkDbConnection } from './config/database.ts';
 
 const startServer = async () => {
+  //si la BD no responde, falla aca y el catch final hace process.exit(1)
+  await checkDbConnection();
+  logger.info(' DB: conexion a PostgreSQL OK');
+
   //inicializamos la app configurada
   const app = await createApp();
 
@@ -22,6 +27,7 @@ const startServer = async () => {
     //deja de aceptar nuevas peticiones HTTP pero permite terminar las peticiones en curso
     server.close(async () => {
       logger.info('SERVIDOR: HTTP cerrado. Desconectando bases de datos y limpiando recursos...');
+      pgp.end(); //cierra el pool de PostgreSQL
       logger.info('OK Proceso finalizado de forma limpia.');
       process.exit(0);
     });

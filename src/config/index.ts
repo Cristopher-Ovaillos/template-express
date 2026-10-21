@@ -7,21 +7,29 @@
 import dotenv from 'dotenv';
 const envFound = dotenv.config(); // config(), lee el .env y parsea el contenido dentro del obj global de process.env de node
 
-if(envFound.error) {
+if (envFound.error) {
     console.warn("X no se encontro el archivo .env");
 }
 //uso: import {config} from './config/index.ts'
 
 export const config = {
-    port : parseInt(process.env.PORT || '3000',10),
-    nodeEnv : process.env.NODE_ENV || 'development',
+    port: parseInt(process.env.PORT || '3000', 10),
+    nodeEnv: process.env.NODE_ENV || 'development',
     api: {
         prefix: process.env.API_PREFIX || '/api'
     },
-    logs:{
+    logs: {
         level: process.env.LOG_LEVEL || 'info'
     },
-    database:{
-        uri: process.env.DATABASE_URI || 'mysql://localhost:3306/db_ejemplo'
+    database: {
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432', 10),
+        user: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+        name: process.env.DB_NAME || 'inelco_tickets_db'
+    },
+    ai: {
+        url: process.env.AI_SERVICE_URL || '',
+        apiKey: process.env.AI_SERVICE_API_KEY || ''
     }
 };
