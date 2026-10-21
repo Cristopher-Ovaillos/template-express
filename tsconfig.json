@@ -1,4 +1,4 @@
-﻿{
+{
   "compilerOptions": {
     "target": "es2022", //esnext es la version por defecto, pero se usa es2022 | con esnext tendriamos las caracteristicas nuevas, pero puede volver imcompattible si se actualiza la version
     "module": "nodenext",
@@ -16,7 +16,6 @@
     "rewriteRelativeImportExtensions": true,
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
-    "noEmit": true,
     "strict": true,
     "skipLibCheck": true
   },
