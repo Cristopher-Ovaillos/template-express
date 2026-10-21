@@ -1,5 +1,5 @@
 {
-  "name": "starter_tempalte_express",
+  "name": "starter_template_express",
   "version": "1.0.0",
   "description": "Template",
   "keywords": [
@@ -18,9 +18,13 @@
   "license": "ISC",
   "author": "Cristopher Ovaillos",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "typecheck": "tsc --noEmit",
     "build": "rimraf dist && tsc && tsc-alias",
     "start": "node dist/server.js",
     "clean": "rimraf dist",
