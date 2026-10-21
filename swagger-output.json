@@ -1,0 +1,14 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Template Express",
+    "description": "Documentación OpenAPI generada automáticamente",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api"
+    }
+  ],
+  "paths": {}
+}

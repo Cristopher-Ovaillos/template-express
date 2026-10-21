@@ -26,7 +26,17 @@ export const config = {
         port: parseInt(process.env.DB_PORT || '5432', 10),
         user: process.env.DB_USER || 'postgres',
         password: process.env.DB_PASSWORD || 'postgres',
-        name: process.env.DB_NAME || 'inelco_tickets_db'
+        name: process.env.DB_NAME || 'inelco_tickets_db',
+        // si es true y la BD no responde al arrancar, el servidor no inicia.
+        // por defecto solo es obligatoria en produccion (DB_REQUIRED=true/false para forzar)
+        required: process.env.DB_REQUIRED
+            ? process.env.DB_REQUIRED === 'true'
+            : (process.env.NODE_ENV || 'development') === 'production'
+    },
+    // credenciales de la documentacion (/api-docs y /swagger-ui). sin ambas, las rutas no se montan
+    swagger: {
+        user: process.env.SWAGGER_USER || '',
+        password: process.env.SWAGGER_PASSWORD || ''
     },
     ai: {
         url: process.env.AI_SERVICE_URL || '',
