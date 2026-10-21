@@ -35,6 +35,7 @@ src/
 │   │   ├── AppError.ts     # Clase de error operacional personalizada
 │   │   └── errorHandler.ts # Middleware global de errores (4 parámetros)
 │   ├── middlewares/
+│   │   ├── swaggerAuth.ts  # Basic Auth para la documentación (env)
 │   │   └── validateRequest.ts # Validación DTO con Zod
 │   └── utils/
 │       ├── asyncHandler.ts # Wrapper para controladores asíncronos
@@ -107,6 +108,7 @@ Para solucionarlo:
 - [helmet](https://www.npmjs.com/package/helmet): Protección mediante cabeceras HTTP seguras.
 - [express-rate-limit](https://www.npmjs.com/package/express-rate-limit): Prevención de ataques de fuerza bruta y abuso de la API.
 - [zod](https://www.npmjs.com/package/zod): Validación de esquemas e inferencia de tipos estáticos.
+- [swagger-autogen](https://www.npmjs.com/package/swagger-autogen) & [swagger-ui-express](https://www.npmjs.com/package/swagger-ui-express): Generación y visualización de la documentación OpenAPI.
 - [tsx](https://www.npmjs.com/package/tsx): Ejecución ultrarrápida de TypeScript en modo desarrollo.
 - [tsc-alias](https://www.npmjs.com/package/tsc-alias): Resolución de alias de rutas en el proceso de compilación (`build`).
 
@@ -128,7 +130,45 @@ npm start
 
 # Limpiar la carpeta dist
 npm run clean
+
+# Generar swagger-output.json (documentación OpenAPI) a partir de src/routes.ts
+npm run swagger
 ```
+
+---
+
+## Documentación de la API (Swagger / OpenAPI)
+
+La documentación se genera con [swagger-autogen](https://www.npmjs.com/package/swagger-autogen) y se expone en dos rutas, ambas protegidas con **Basic Auth**:
+
+| Ruta | Descripción |
+|------|-------------|
+| `/api-docs` | Swagger UI servido por [swagger-ui-express](https://www.npmjs.com/package/swagger-ui-express) |
+| `/swagger-ui/` | Swagger UI estático desde la carpeta `swagger_ui/` (consume `/swagger-ui/swagger-output.json`) |
+
+### Configuración
+
+1. Definir las credenciales en el `.env` (nunca en el código):
+
+   ```env
+   SWAGGER_USER=tu_usuario
+   SWAGGER_PASSWORD=una_clave_larga
+   ```
+
+2. Generar el archivo con la documentación:
+
+   ```bash
+   npm run swagger
+   ```
+
+3. Levantar el servidor y entrar a `http://localhost:<PORT>/api-docs` o `http://localhost:<PORT>/swagger-ui/`.
+
+### Comportamiento
+
+- Si falta `SWAGGER_USER` o `SWAGGER_PASSWORD`, las rutas **no se montan** (cerradas por defecto) y se muestra un aviso en consola.
+- Si no existe `swagger-output.json`, tampoco se montan. Hay que volver a correr `npm run swagger` cada vez que cambien las rutas.
+- La autenticación está en `src/core/middlewares/swaggerAuth.ts` y compara las credenciales en tiempo constante.
+- Basic Auth envía la clave en base64 (no cifrada): fuera de localhost usarlo detrás de HTTPS.
 
 ---
 
