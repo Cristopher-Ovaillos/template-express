@@ -7,9 +7,14 @@ import { logger } from './loaders/logger.ts';
 import { pgp, checkDbConnection } from './config/database.ts';
 
 const startServer = async () => {
-  //si la BD no responde, falla aca y el catch final hace process.exit(1)
-  await checkDbConnection();
-  logger.info(' DB: conexion a PostgreSQL OK');
+  //si la BD es obligatoria (DB_REQUIRED) y no responde, falla aca y el catch final hace process.exit(1)
+  try {
+    await checkDbConnection();
+    logger.info(' DB: conexion a PostgreSQL OK');
+  } catch (err) {
+    if (config.database.required) throw err;
+    logger.warn(` DB: sin conexion a PostgreSQL, el servidor arranca igual (DB_REQUIRED=false). Motivo: ${(err as Error).message}`);
+  }
 
   //inicializamos la app configurada
   const app = await createApp();
