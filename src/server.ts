@@ -13,7 +13,9 @@ const startServer = async () => {
     logger.info(' DB: conexion a PostgreSQL OK');
   } catch (err) {
     if (config.database.required) throw err;
-    logger.warn(` DB: sin conexion a PostgreSQL, el servidor arranca igual (DB_REQUIRED=false). Motivo: ${(err as Error).message}`);
+    //con varias IPs (::1 y 127.0.0.1) pg lanza un AggregateError con message vacio
+    const reason = (err as Error).message || (err as { code?: string }).code || String(err);
+    logger.warn(` DB: sin conexion a PostgreSQL, el servidor arranca igual (DB_REQUIRED=false). Motivo: ${reason}`);
   }
 
   //inicializamos la app configurada

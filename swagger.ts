@@ -1,21 +1,16 @@
-// genera swagger-output.json a partir de las rutas. uso: npm run swagger
-// (este archivo esta fuera de src/, asi que el tsconfig no lo cubre: referenciamos los tipos de node)
+// genera swagger-output.json a partir de src/routes.ts. uso: npm run swagger
 /// <reference types="node" />
 
-import 'dotenv/config';
 import swaggerAutogen from 'swagger-autogen';
-
-const port = process.env.PORT || '3000';
-const prefix = process.env.API_PREFIX || '/api';
+import { config } from './src/config/index.ts';
 
 const doc = {
   info: {
-    title: process.env.SWAGGER_TITLE || 'API Template Express',
-    description: process.env.SWAGGER_DESCRIPTION || 'Documentación OpenAPI generada automáticamente',
-    version: process.env.SWAGGER_VERSION || '1.0.0',
+    title: config.swagger.title,
+    description: config.swagger.description,
+    version: config.swagger.version,
   },
-  // las rutas se montan bajo config.api.prefix
-  servers: [{ url: process.env.SWAGGER_SERVER_URL || `http://localhost:${port}${prefix}` }],
+  servers: [{ url: config.swagger.serverUrl }],
 };
 
 const outputFile = './swagger-output.json';

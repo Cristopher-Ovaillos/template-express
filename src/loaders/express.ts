@@ -15,7 +15,10 @@ export  const expressLoader = ({app}: {app: Application}) : void =>{
     //ocultar header  'X-Powered-By' por seguridad
     app.disable('x-powered-by');
     //headers http seguras contra xss etc
-    app.use(helmet());
+    //sin upgrade-insecure-requests fuera de produccion, si no algunos navegadores piden /api-docs por https y no carga
+    app.use(helmet(config.nodeEnv === 'production' ? undefined : {
+        contentSecurityPolicy: {useDefaults: true, directives: {'upgrade-insecure-requests': null}},
+    }));
     //control de acceso HTTP cors
     app.use(cors());
 
@@ -25,9 +28,9 @@ export  const expressLoader = ({app}: {app: Application}) : void =>{
     //limitador de peticiones para prevenir ataques de fuerza bruta
     const limiter = rateLimit({
         windowMs: 15 * 60 * 1000, // 15 minutos
-        max: 100, // max de peticiones por minuto
+        limit: 100, // max de peticiones por ventana (windowMs) y por IP
         standardHeaders: true, // devuelve info de limitacion en headers
-        legacyHeaders: false, // devuelve info de limitacion en headers
+        legacyHeaders: false, // desactiva los headers X-RateLimit-* antiguos
         message: {status: 429, message: 'Demasiadas peticiones, por favor intente mas tarde.'},
     });
 

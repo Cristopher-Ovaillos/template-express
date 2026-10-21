@@ -10,5 +10,20 @@
       "url": "http://localhost:3000/api"
     }
   ],
-  "paths": {}
+  "paths": {
+    "/ping/": {
+      "get": {
+        "tags": [
+          "Ping"
+        ],
+        "summary": "Verifica que la API responde",
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    }
+  }
 }
