@@ -21,26 +21,28 @@ Organizamos el código mediante una **arquitectura modular en 3 capas** (Control
 
 ```text
 src/
-├── app.ts                  # Instancia e integración de Express
-├── routes.ts               # Enrutador central de la API (/api/)
+├── app.ts                  # Instancia e integración de Express (monta /api-docs y las rutas)
+├── routes.ts               # Enrutador central de la API (bajo API_PREFIX)
 ├── server.ts               # Arranque del servidor HTTP y Graceful Shutdown
 ├── config/
-│   └── index.ts            # Variables de entorno tipadas y centralizadas
+│   ├── index.ts            # Variables de entorno tipadas y centralizadas
+│   └── database.ts         # Conexión PostgreSQL (pg-promise)
 ├── loaders/
 │   ├── express.ts          # Middlewares de seguridad (Helmet, CORS, Rate Limit)
 │   ├── index.ts            # Orquestador de inicializadores
-│   └── logger.ts           # Configuración de Pino Logger
+│   └── logger.ts           # Pino: consola y, opcionalmente, archivo (LOG_FILE)
 ├── core/
 │   ├── errors/
 │   │   ├── AppError.ts     # Clase de error operacional personalizada
 │   │   └── errorHandler.ts # Middleware global de errores (4 parámetros)
 │   ├── middlewares/
-│   │   ├── swaggerAuth.ts  # Basic Auth para la documentación (env)
+│   │   ├── swaggerAuth.ts  # Basic Auth para /api-docs (env)
 │   │   └── validateRequest.ts # Validación DTO con Zod
 │   └── utils/
 │       ├── asyncHandler.ts # Wrapper para controladores asíncronos
 │       └── responseHandler.ts # Respuestas de éxito estandarizadas (sendSuccess)
 ├── modules/
+│   ├── ping/               # Ejemplo mínimo (GET /api/ping): copiarlo para crear un módulo nuevo
 │   └── [recurso]/          # Módulos por dominio de negocio
 │       ├── recurso.controller.ts
 │       ├── recurso.mapper.ts     # Mapeo de Entidades a DTOs
@@ -95,6 +97,7 @@ Make sure to set "type": "module" in the nearest package.json file or use the .m
 Para solucionarlo:
 - Se añadió `"type": "module"` en el `package.json` para activar **ES Modules (ESM)** de forma nativa en Node.js.
 - Para el desarrollo con alias de rutas (`@core/*`, `@modules/*`, etc.), utilizamos **`tsx`**, el ejecutor más rápido para TypeScript con soporte nativo de ESM.
+- Requiere Node.js 20 o superior (CI y Docker usan 22).
 - Para la compilación a producción, usamos **`tsc-alias`**, el cual traduce automáticamente los alias `@` a rutas relativas dentro de la carpeta `dist/`.
 
 ---
@@ -122,6 +125,9 @@ En la raíz del proyecto puedes ejecutar:
 # Iniciar servidor en modo desarrollo con recarga automática
 npm run dev
 
+# Verificar tipos sin generar archivos (lo mismo que corre el CI)
+npm run typecheck
+
 # Compilar el proyecto TypeScript a JavaScript en /dist
 npm run build
 
@@ -137,38 +143,76 @@ npm run swagger
 
 ---
 
+## Variables de entorno
+
+Copiar `.env.example` a `.env` y ajustar. Todo se lee en un solo lugar (`src/config/index.ts`), incluida la documentación Swagger.
+
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `PORT` | `3000` | Puerto del servidor. También define la URL que muestra Swagger |
+| `NODE_ENV` | `development` | `development` usa logs legibles (pino-pretty) y expone el stack en errores |
+| `API_PREFIX` | `/api` | Prefijo donde se montan las rutas. También sale en Swagger |
+| `LOG_LEVEL` | `info` | `fatal`, `error`, `warn`, `info`, `debug`, `trace` |
+| `LOG_FILE` | *(vacío)* | Si se define (ej: `logs/app.log`) los logs también se escriben en ese archivo en JSON. Vacío = solo consola |
+| `DB_HOST` `DB_PORT` `DB_USER` `DB_PASSWORD` `DB_NAME` | ver `.env.example` | Conexión a PostgreSQL |
+| `DB_REQUIRED` | `true` solo en `production` | Si es `true` y la BD no responde, el servidor no arranca |
+| `SWAGGER_USER` / `SWAGGER_PASSWORD` | *(vacío)* | Credenciales de `/api-docs`. Sin ambas la ruta no se monta |
+| `SWAGGER_TITLE` `SWAGGER_DESCRIPTION` `SWAGGER_VERSION` | ver `.env.example` | Datos que muestra la documentación |
+| `SWAGGER_SERVER_URL` | `http://localhost:$PORT$API_PREFIX` | Solo para pisar la URL (ej: dominio público) |
+
+---
+
 ## Documentación de la API (Swagger / OpenAPI)
 
-La documentación se genera con [swagger-autogen](https://www.npmjs.com/package/swagger-autogen) y se expone en dos rutas, ambas protegidas con **Basic Auth**:
+Se genera con [swagger-autogen](https://www.npmjs.com/package/swagger-autogen) y se expone en una sola ruta, `/api-docs`, protegida con Basic Auth.
 
-| Ruta | Descripción |
-|------|-------------|
-| `/api-docs` | Swagger UI servido por [swagger-ui-express](https://www.npmjs.com/package/swagger-ui-express) |
-| `/swagger-ui/` | Swagger UI estático desde la carpeta `swagger_ui/` (consume `/swagger-ui/swagger-output.json`) |
+1. Definir `SWAGGER_USER` y `SWAGGER_PASSWORD` en el `.env`.
+2. Generar los paths: `npm run swagger` (volver a correrlo cada vez que cambien las rutas).
+3. Levantar el servidor y entrar a `http://localhost:<PORT>/api-docs`.
 
-### Configuración
+4. Probar los endpoints: en `/api-docs` abrir un endpoint, Try it out y Execute. El template trae `GET /api/ping` para ver cómo se documenta.
 
-1. Definir las credenciales en el `.env` (nunca en el código):
-
-   ```env
-   SWAGGER_USER=tu_usuario
-   SWAGGER_PASSWORD=una_clave_larga
-   ```
-
-2. Generar el archivo con la documentación:
-
-   ```bash
-   npm run swagger
-   ```
-
-3. Levantar el servidor y entrar a `http://localhost:<PORT>/api-docs` o `http://localhost:<PORT>/swagger-ui/`.
+Para documentar un endpoint nuevo: registrar el módulo en `src/routes.ts` y poner los comentarios `// #swagger.tags = [...]`, `// #swagger.summary = '...'` dentro del handler en el archivo de rutas (como en `src/modules/ping/ping.routes.ts`); `swagger-autogen` no lee los comentarios que estén en los controllers.
 
 ### Comportamiento
 
-- Si falta `SWAGGER_USER` o `SWAGGER_PASSWORD`, las rutas **no se montan** (cerradas por defecto) y se muestra un aviso en consola.
-- Si no existe `swagger-output.json`, tampoco se montan. Hay que volver a correr `npm run swagger` cada vez que cambien las rutas.
+- Los *paths* salen de `swagger-output.json`; el título, la versión y el servidor (`PORT` + `API_PREFIX`) se toman del `.env` en cada arranque, así que cambiar el puerto no requiere regenerar el archivo.
+- Si falta `SWAGGER_USER`/`SWAGGER_PASSWORD` o `swagger-output.json`, la ruta no se monta (cerrada por defecto) y se avisa en el log.
 - La autenticación está en `src/core/middlewares/swaggerAuth.ts` y compara las credenciales en tiempo constante.
 - Basic Auth envía la clave en base64 (no cifrada): fuera de localhost usarlo detrás de HTTPS.
+
+---
+
+## Logs
+
+Por defecto salen por consola (pino-pretty en `development`, JSON en el resto). Para guardarlos además en un archivo definir `LOG_FILE`:
+
+```env
+LOG_FILE=logs/app.log
+```
+
+La carpeta se crea sola y `logs/` está en `.gitignore` y `.dockerignore`.
+
+---
+
+## Flujo de ramas y CI
+
+Ramas fijas, de menor a mayor estabilidad:
+
+| Rama | Para qué sirve | Cuándo se toca |
+|------|----------------|----------------|
+| `desarrollo` | Integración del trabajo diario | Todo el desarrollo: se crean ramas `feature/*` o `fix/*` desde acá y se vuelven por PR |
+| `stage` | Pre-producción / QA | Cuando `desarrollo` tiene un conjunto de cambios listo para probar: PR `desarrollo` → `stage`. Acá solo se corrigen bugs que aparezcan en QA |
+| `produccion` | Lo que está desplegado | Cuando `stage` fue validado: PR `stage` → `produccion` (etiquetar la versión, ej: `v1.2.0`) |
+
+```text
+feature/* ──PR──> desarrollo ──PR──> stage ──PR──> produccion
+```
+
+- Nadie hace commit directo en `stage` ni `produccion`; solo llegan cambios por PR.
+- Un bug urgente en producción se corrige en una rama `hotfix/*` desde `produccion`, y luego se vuelve a llevar a `stage` y `desarrollo` para no perder el arreglo.
+- El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) corre en cada PR y push a esas tres ramas: `typecheck`, `build`, `npm run swagger` y `npm audit` de dependencias de producción (Node 22). Falta agregar el paso de tests cuando exista un runner.
+- Recomendado en GitHub (Settings → Branches): proteger `stage` y `produccion` exigiendo PR y que pase el check `build`, y poner `desarrollo` como rama por defecto.
 
 ---
 
